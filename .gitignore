@@ -1,0 +1,6 @@
+.pio
+include
+lib
+test
+*.ini
+.idea
