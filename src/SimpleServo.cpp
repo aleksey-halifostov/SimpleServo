@@ -11,6 +11,8 @@ volatile bool SimpleServo::isPeriodEnded = true;
 
 void SimpleServo::init() {
 
+    cli();
+
     TCCR1A = 0;
     TCCR1B = 0;
 
@@ -19,6 +21,8 @@ void SimpleServo::init() {
 
     TIMSK1 |= (1 << OCIE1A); // Interrupt mask, set interrupt on compare
     OCR1A = PERIOD_TICKS; // Default interrupt value
+
+    sei();
 
     _isInitialized = true;
 }
@@ -74,6 +78,8 @@ void SimpleServo::setAngle(uint8_t angle) {
 void SimpleServo::onInterrupt() {
 
     if (count == 0) {
+
+        OCR1A = PERIOD_TICKS;
         return;
     }
 
