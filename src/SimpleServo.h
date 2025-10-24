@@ -21,12 +21,12 @@
 
 #include <stdint.h>
 
-typedef struct {
+typedef struct ConnectionData{
 
     volatile uint8_t *pointer_register;
     volatile uint8_t pin_mask;
     volatile uint16_t ticks;
-} connection_t;
+} cond_t;
 
 class SimpleServo {
 
@@ -47,7 +47,7 @@ class SimpleServo {
 
         static void init();
 
-        connection_t _data{};
+        cond_t _data{};
 };
 
 #endif //SIMPLESERVO_SIMPLESERVO_H
