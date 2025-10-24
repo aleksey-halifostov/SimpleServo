@@ -23,9 +23,10 @@
 
 typedef struct {
 
-    volatile uint8_t pin;
+    volatile uint8_t *pointer_register;
+    volatile uint8_t pin_mask;
     volatile uint16_t ticks;
-} servo_t;
+} connection_t;
 
 class SimpleServo {
 
@@ -37,7 +38,7 @@ class SimpleServo {
         static void onInterrupt();
 
     private:
-        static  bool _isInitialized;
+        static  bool isInitialized;
         static volatile uint8_t index;
         static volatile uint8_t count;
         static volatile uint16_t sumOfImpulses;
@@ -46,7 +47,7 @@ class SimpleServo {
 
         static void init();
 
-        servo_t _data{};
+        connection_t _data{};
 };
 
 #endif //SIMPLESERVO_SIMPLESERVO_H

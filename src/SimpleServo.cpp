@@ -1,7 +1,7 @@
 #include <SimpleServo.h>
 #include <Arduino.h>
 
-bool SimpleServo::_isInitialized = false;
+bool SimpleServo::isInitialized = false;
 
 volatile SimpleServo* SimpleServo::servos[MAX_SERVO_COUNT];
 volatile uint8_t SimpleServo::index = 0;
@@ -24,7 +24,7 @@ void SimpleServo::init() {
 
     sei();
 
-    _isInitialized = true;
+    isInitialized = true;
 }
 
 uint8_t evaluateAngle180(uint8_t angle) {
@@ -39,17 +39,32 @@ uint8_t evaluateAngle180(uint8_t angle) {
 
 void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
 
-    if (!_isInitialized) {
+    if (!isInitialized) {
 
         init();
     }
 
+    if (pin < 0 || pin > 13) {
+
+        return;
+    }
+
     if (count < MAX_SERVO_COUNT) {
 
-        _data.pin = pin;
         _data.ticks = map(evaluateAngle180(startAngle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
-            MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
-        pinMode(_data.pin, OUTPUT);
+                          MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
+        pinMode(pin, OUTPUT);
+
+        if (pin < 8) {
+
+            _data.pointer_register = &PORTD;
+            _data.pin_mask = (1 << pin);
+        }
+        else {
+
+            _data.pointer_register = &PORTB;
+            _data.pin_mask = (1 << (pin - 8));
+        }
 
         cli();
         servos[count] = this;
@@ -86,15 +101,14 @@ void SimpleServo::onInterrupt() {
     if (isPeriodEnded) {
 
         isPeriodEnded = false;
-        digitalWrite(servos[index]->_data.pin, HIGH);
+        *(servos[index]->_data.pointer_register) |= servos[index]->_data.pin_mask;
         sumOfImpulses = servos[index]->_data.ticks;
         OCR1A = servos[index]->_data.ticks;
-        index = 1;
 
         return;
     }
 
-    digitalWrite(servos[index]->_data.pin, LOW);
+    *(servos[index]->_data.pointer_register) &= ~(servos[index]->_data.pin_mask);
     index++;
 
     if (index == count) {
@@ -108,7 +122,7 @@ void SimpleServo::onInterrupt() {
 
     sumOfImpulses += servos[index]->_data.ticks;
     OCR1A = servos[index]->_data.ticks;
-    digitalWrite(servos[index]->_data.pin, HIGH);
+    *(servos[index]->_data.pointer_register) |= servos[index]->_data.pin_mask;
 }
 
 ISR(TIMER1_COMPA_vect) {
