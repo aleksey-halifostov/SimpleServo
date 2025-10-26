@@ -33,17 +33,17 @@ class SimpleServo {
     public:
         void attach(uint8_t pin);
         void attach(uint8_t pin, uint8_t startAngle);
-        void setAngle(uint8_t angle);
+        void set_angle(uint8_t angle);
 
-        static void onInterrupt();
+        static void on_interrupt();
 
     private:
-        static  bool isInitialized;
-        static volatile uint8_t index;
-        static volatile uint8_t count;
-        static volatile uint16_t sumOfImpulses;
-        static volatile bool isPeriodEnded;
-        static volatile SimpleServo* servos[];
+        static  bool s_is_initialized;
+        static volatile uint8_t s_index;
+        static volatile uint8_t s_count;
+        static volatile uint16_t s_sum_of_impulses;
+        static volatile bool s_is_period_ended;
+        static volatile SimpleServo* s_servos[];
 
         static void init();
 

@@ -1,13 +1,13 @@
 #include <SimpleServo.h>
 #include <Arduino.h>
 
-bool SimpleServo::isInitialized = false;
+bool SimpleServo::s_is_initialized = false;
 
-volatile SimpleServo* SimpleServo::servos[MAX_SERVO_COUNT];
-volatile uint8_t SimpleServo::index = 0;
-volatile uint8_t SimpleServo::count = 0;
-volatile uint16_t SimpleServo::sumOfImpulses = 0;
-volatile bool SimpleServo::isPeriodEnded = true;
+volatile SimpleServo* SimpleServo::s_servos[MAX_SERVO_COUNT];
+volatile uint8_t SimpleServo::s_index = 0;
+volatile uint8_t SimpleServo::s_count = 0;
+volatile uint16_t SimpleServo::s_sum_of_impulses = 0;
+volatile bool SimpleServo::s_is_period_ended = true;
 
 void SimpleServo::init() {
 
@@ -24,7 +24,7 @@ void SimpleServo::init() {
 
     sei();
 
-    isInitialized = true;
+    s_is_initialized = true;
 }
 
 uint8_t evaluateAngle180(uint8_t angle) {
@@ -39,7 +39,7 @@ uint8_t evaluateAngle180(uint8_t angle) {
 
 void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
 
-    if (!isInitialized) {
+    if (!s_is_initialized) {
 
         init();
     }
@@ -49,7 +49,7 @@ void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
         return;
     }
 
-    if (count < MAX_SERVO_COUNT) {
+    if (s_count < MAX_SERVO_COUNT) {
 
         _data.ticks = map(evaluateAngle180(startAngle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
                           MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
@@ -67,8 +67,8 @@ void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
         }
 
         cli();
-        servos[count] = this;
-        count++;
+        s_servos[s_count] = this;
+        s_count++;
         sei();
     }
 }
@@ -78,7 +78,7 @@ void SimpleServo::attach(uint8_t pin) {
     attach(pin, DEFAULT_START_ANGLE);
 }
 
-void SimpleServo::setAngle(uint8_t angle) {
+void SimpleServo::set_angle(uint8_t angle) {
 
     uint16_t ticks = map(evaluateAngle180(angle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
         MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
@@ -90,42 +90,42 @@ void SimpleServo::setAngle(uint8_t angle) {
     sei();
 }
 
-void SimpleServo::onInterrupt() {
+void SimpleServo::on_interrupt() {
 
-    if (count == 0) {
+    if (s_count == 0) {
 
         OCR1A = PERIOD_TICKS;
         return;
     }
 
-    if (isPeriodEnded) {
+    if (s_is_period_ended) {
 
-        isPeriodEnded = false;
-        *(servos[index]->_data.pointer_register) |= servos[index]->_data.pin_mask;
-        sumOfImpulses = servos[index]->_data.ticks;
-        OCR1A = servos[index]->_data.ticks;
-
-        return;
-    }
-
-    *(servos[index]->_data.pointer_register) &= ~(servos[index]->_data.pin_mask);
-    index++;
-
-    if (index == count) {
-
-        OCR1A = PERIOD_TICKS - sumOfImpulses;
-        index = 0;
-        isPeriodEnded = true;
+        s_is_period_ended = false;
+        *(s_servos[s_index]->_data.pointer_register) |= s_servos[s_index]->_data.pin_mask;
+        s_sum_of_impulses = s_servos[s_index]->_data.ticks;
+        OCR1A = s_servos[s_index]->_data.ticks;
 
         return;
     }
 
-    sumOfImpulses += servos[index]->_data.ticks;
-    OCR1A = servos[index]->_data.ticks;
-    *(servos[index]->_data.pointer_register) |= servos[index]->_data.pin_mask;
+    *(s_servos[s_index]->_data.pointer_register) &= ~(s_servos[s_index]->_data.pin_mask);
+    s_index++;
+
+    if (s_index == s_count) {
+
+        OCR1A = PERIOD_TICKS - s_sum_of_impulses;
+        s_index = 0;
+        s_is_period_ended = true;
+
+        return;
+    }
+
+    s_sum_of_impulses += s_servos[s_index]->_data.ticks;
+    OCR1A = s_servos[s_index]->_data.ticks;
+    *(s_servos[s_index]->_data.pointer_register) |= s_servos[s_index]->_data.pin_mask;
 }
 
 ISR(TIMER1_COMPA_vect) {
 
-    SimpleServo::onInterrupt();
+    SimpleServo::on_interrupt();
 }
