@@ -16,18 +16,17 @@ void SimpleServo::init() {
     TCCR1A = 0;
     TCCR1B = 0;
 
-    TCCR1B |= (1 << WGM12); // CTC
     TCCR1B |= (1 << CS11); // Prescaler 8
 
     TIMSK1 |= (1 << OCIE1A); // Interrupt mask, set interrupt on compare
-    OCR1A = PERIOD_TICKS; // Default interrupt value
+    OCR1A = TCNT1 + PERIOD_TICKS;
 
     sei();
 
     s_is_initialized = true;
 }
 
-uint8_t evaluateAngle180(uint8_t angle) {
+uint8_t SimpleServo::evaluate_angle180(uint8_t angle) {
 
     if (angle > MAX_SERVO_ANGLE) {
 
@@ -51,7 +50,7 @@ void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
 
     if (s_count < MAX_SERVO_COUNT) {
 
-        _data.ticks = map(evaluateAngle180(startAngle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
+        _data.ticks = map(evaluate_angle180(startAngle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
                           MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
         pinMode(pin, OUTPUT);
 
@@ -80,7 +79,7 @@ void SimpleServo::attach(uint8_t pin) {
 
 void SimpleServo::set_angle(uint8_t angle) {
 
-    uint16_t ticks = map(evaluateAngle180(angle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
+    uint16_t ticks = map(evaluate_angle180(angle), MIN_SERVO_ANGLE, MAX_SERVO_ANGLE,
         MIN_IMPULSE_LENGTH, MAX_IMPULSE_LENGTH) * MICROSECONDS_TO_TICKS_SCALER;
 
     cli();
@@ -94,7 +93,7 @@ void SimpleServo::on_interrupt() {
 
     if (s_count == 0) {
 
-        OCR1A = PERIOD_TICKS;
+        OCR1A +=  PERIOD_TICKS;
         return;
     }
 
@@ -103,7 +102,7 @@ void SimpleServo::on_interrupt() {
         s_is_period_ended = false;
         *(s_servos[s_index]->_data.pointer_register) |= s_servos[s_index]->_data.pin_mask;
         s_sum_of_impulses = s_servos[s_index]->_data.ticks;
-        OCR1A = s_servos[s_index]->_data.ticks;
+        OCR1A += s_servos[s_index]->_data.ticks;
 
         return;
     }
@@ -113,15 +112,19 @@ void SimpleServo::on_interrupt() {
 
     if (s_index == s_count) {
 
-        OCR1A = PERIOD_TICKS - s_sum_of_impulses;
-        s_index = 0;
         s_is_period_ended = true;
+        s_index = 0;
+
+        if (PERIOD_TICKS - s_sum_of_impulses < MIN_SAFE_GAP)
+            on_interrupt();
+        else
+            OCR1A += (PERIOD_TICKS - s_sum_of_impulses);
 
         return;
     }
 
     s_sum_of_impulses += s_servos[s_index]->_data.ticks;
-    OCR1A = s_servos[s_index]->_data.ticks;
+    OCR1A += s_servos[s_index]->_data.ticks;
     *(s_servos[s_index]->_data.pointer_register) |= s_servos[s_index]->_data.pin_mask;
 }
 

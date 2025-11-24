@@ -1,7 +1,7 @@
 #ifndef SIMPLESERVO_SIMPLESERVO_H
 #define SIMPLESERVO_SIMPLESERVO_H
 
-#define MAX_SERVO_COUNT 8
+#define MAX_SERVO_COUNT 10
 #define MICROSECONDS_TO_TICKS_SCALER 2
 
 // Angle limits
@@ -13,11 +13,12 @@
 
 // Impulse limits
 // All time scales in microseconds
-#define MIN_IMPULSE_LENGTH 500
-#define MAX_IMPULSE_LENGTH 2500
+#define MIN_IMPULSE_LENGTH 1000
+#define MAX_IMPULSE_LENGTH 2000
 
 // Impulse period limit
 #define PERIOD_TICKS 40000u
+#define MIN_SAFE_GAP 150
 
 #include <stdint.h>
 
@@ -38,6 +39,8 @@ class SimpleServo {
         static void on_interrupt();
 
     private:
+        cond_t _data{};
+
         static  bool s_is_initialized;
         static volatile uint8_t s_index;
         static volatile uint8_t s_count;
@@ -45,9 +48,10 @@ class SimpleServo {
         static volatile bool s_is_period_ended;
         static volatile SimpleServo* s_servos[];
 
+        uint8_t evaluate_angle180(uint8_t angle);
+
         static void init();
 
-        cond_t _data{};
 };
 
 #endif //SIMPLESERVO_SIMPLESERVO_H
