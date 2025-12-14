@@ -56,12 +56,12 @@ void SimpleServo::attach(uint8_t pin, uint8_t startAngle) {
 
         if (pin < 8) {
 
-            _data.pointer_register = &PORTD;
+            _data.pointer_register = (uint8_t*)&PORTD;
             _data.pin_mask = (1 << pin);
         }
         else {
 
-            _data.pointer_register = &PORTB;
+            _data.pointer_register = (uint8_t*)&PORTB;
             _data.pin_mask = (1 << (pin - 8));
         }
 

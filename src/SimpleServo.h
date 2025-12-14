@@ -1,32 +1,32 @@
 #ifndef SIMPLESERVO_SIMPLESERVO_H
 #define SIMPLESERVO_SIMPLESERVO_H
 
-#define MAX_SERVO_COUNT 10
-#define MICROSECONDS_TO_TICKS_SCALER 2
+#include <stdint.h>
+
+constexpr uint16_t MAX_SERVO_COUNT = 10;
+constexpr uint16_t MICROSECONDS_TO_TICKS_SCALER = 2;
 
 // Angle limits
-#define MIN_SERVO_ANGLE 0
-#define MAX_SERVO_ANGLE 180
+constexpr uint16_t MIN_SERVO_ANGLE = 0;
+constexpr uint16_t MAX_SERVO_ANGLE = 180;
 
 // Default start angle
-#define DEFAULT_START_ANGLE 90
+constexpr uint16_t DEFAULT_START_ANGLE = 90;
 
 // Impulse limits
 // All time scales in microseconds
-#define MIN_IMPULSE_LENGTH 1000
-#define MAX_IMPULSE_LENGTH 2000
+constexpr uint16_t MIN_IMPULSE_LENGTH = 1000;
+constexpr uint16_t MAX_IMPULSE_LENGTH = 2000;
 
 // Impulse period limit
-#define PERIOD_TICKS 40000u
-#define MIN_SAFE_GAP 150
-
-#include <stdint.h>
+constexpr uint16_t PERIOD_TICKS = 40000u;
+constexpr uint16_t MIN_SAFE_GAP = 150;
 
 typedef struct ConnectionData{
 
-    volatile uint8_t *pointer_register;
-    volatile uint8_t pin_mask;
-    volatile uint16_t ticks;
+    uint8_t *pointer_register;
+    uint8_t pin_mask;
+    uint16_t ticks;
 } cond_t;
 
 class SimpleServo {
@@ -39,7 +39,7 @@ class SimpleServo {
         static void on_interrupt();
 
     private:
-        cond_t _data{};
+        volatile cond_t _data{};
 
         static  bool s_is_initialized;
         static volatile uint8_t s_index;
