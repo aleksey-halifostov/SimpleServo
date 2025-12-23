@@ -62,6 +62,3 @@ Status & Research: I am actively researching C++ Design Patterns to solve this e
 ### 2. Hardware Support
 
 The current implementation is optimized specifically for ATmega328p (Timer1) and does not support generic pin mapping for other architectures.
-
-## 📝 License
-This project is open-source and available under the MIT License.
