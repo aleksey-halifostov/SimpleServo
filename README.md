@@ -17,7 +17,7 @@ Instead of using pre-configured functions like digitalWrite or standard timer mo
   - minimizing ISR execution time via Direct Register Access
 
 ## ⚙️ Technical Implementation
-### 1. Timer1 Architecture:
+### 1. Timer1
    
 I chose Normal Mode (free-running timer) over the simpler CTC mode to ensure signal stability.
 
